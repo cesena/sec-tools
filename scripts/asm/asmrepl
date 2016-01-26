@@ -1,0 +1,70 @@
+#!/usr/bin/env ruby
+
+
+require "tempfile"
+
+
+$code = []
+$prompt = ">> "
+$asmprefix = "tempfile-asmrepl-"
+$asmsuffix = ".s"
+
+def error(msg)
+  puts "[ERROR] #{msg}"
+  exit -1
+end
+
+def check_prerequisites
+  error("Makefile is not present") unless File.file?("Makefile")
+end
+
+def close
+  exit(0)
+end
+
+def clean
+  $code = [
+    "BITS 32",
+    "GLOBAL _start",
+    "_start:"
+  ]
+  true
+end
+
+def add(input)
+  $code << input
+  true
+end
+
+def run
+  file = Tempfile.new([$asmprefix, $asmsuffix], File.dirname(__FILE__))
+  File.open(file.path, "w") { |f| f.write($code.join("\n")) }
+  name = File.basename(file.path, $asmsuffix) 
+  system("make NAME=#{name}")
+  system("make clean NAME=#{name}")
+  file.unlink
+  true
+end
+
+def handle_input(input)
+  case input
+  when /^exit$/ then close
+  when /^clean$/ then clean
+  when /^run$/ then run
+  when /^-\s*(.+)$/ then add($1)
+  else add(input) and run
+  end
+end
+
+def eval_line
+  print $prompt
+  handle_input(gets.chomp)
+end
+
+def main
+  check_prerequisites
+  clean
+  loop { eval_line }
+end
+
+main
