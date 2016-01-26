@@ -18,7 +18,7 @@ class BHBp(gdb.Breakpoint):
         self.remaining = remaining
 
     def stop(self):
-        callback(self.location, clean_remaining(self.remaining))
+        self.callback(self.location, clean_remaining(self.remaining))
         return False
 
 class BHCmd(gdb.Command):
@@ -39,7 +39,7 @@ class BHCmd(gdb.Command):
         if self.verbose:
             print("-> Location %s" % (location,))
         spec = "*0x%s" % (location.pc,)
-        BHBp(spec, callback, location, remaining)
+        BHBp(spec, self.callback, location, remaining)
 
 # }}}
 
