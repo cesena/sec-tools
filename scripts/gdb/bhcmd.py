@@ -1,10 +1,21 @@
 import gdb
-import re
+from re import sub
+from itertools import tee
+try:
+    from itertools import izip
+except ImportError: # Python 3.x
+    izip = zip
 
 # {{{ Utility functions --------------------------------------------------------
 
 def clean_remaining(remaining):
-    return re.sub(r"^[,]?\s*", "", remaining)
+    return sub(r"^[,]?\s*", "", remaining)
+
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = tee(iterable)
+    next(b, None)
+    return izip(a, b)
 
 # }}}
 
@@ -46,5 +57,6 @@ class BHCmd(gdb.Command):
 # {{{ Custom commands ----------------------------------------------------------
 
 c_examine = BHCmd("c_examine", lambda _, r: gdb.execute("x/%s" % (r,)))
+c_printf  = BHCmd("c_printf",  lambda _, r: gdb.execute("printf %s" % (r,)))
 
 # }}}
