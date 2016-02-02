@@ -17,6 +17,31 @@ def pairwise(iterable):
     next(b, None)
     return izip(a, b)
 
+def strip(array):
+    return filter(None, array)
+
+def bp_info():
+    info = []
+    breakpoints = strip(gdb.execute("i b", False, True).split("\n"))
+    header = [title.lower() for title in strip(breakpoints.pop(0).split(" "))]
+    bp = None
+    for breakpoint_str in breakpoints:
+        breakpoint = strip(breakpoint_str.split(" "))
+        if len(breakpoint) == len(header): # breakpoint line.
+            bp = dict(zip(header, breakpoint))
+            bp["uncategorized"] = []
+            info.append(bp)
+        elif bp is not None:
+            if breakpoint_str.find("breakpoint already hit ") > 0:
+                bp["hit_count"] = int(breakpoint_str.split(" ")[3])
+            elif breakpoint_str.find("ignore next ") > 0:
+                bp["ignore_next"] = int(breakpoint_str.split(" ")[2])
+            else:
+                bp["uncategorized"].append(breakpoint_str)
+        else:
+            print("Can't correctly parse the line: %s: skipping.." % (breakpoint_str,))
+    return info
+
 # }}}
 
 # {{{ GDB Library --------------------------------------------------------------
