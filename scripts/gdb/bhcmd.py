@@ -20,6 +20,8 @@ def pairwise(iterable):
 def strip(array):
     return filter(None, array)
 
+# {{{ GDB functions ------------------------------------------------------------
+
 def bp_info():
     info = []
     breakpoints = strip(gdb.execute("i b", False, True).split("\n"))
