@@ -84,7 +84,7 @@ class BHCmd(gdb.Command):
 
 c_examine = BHCmd("c_examine", lambda _, r: gdb.execute("x/%s" % (r,)))
 c_printf  = BHCmd("c_printf",  lambda _, r: gdb.execute("printf %s" % (r,)))
-c_where   = BHCmd("c_where",  lambda _, _: (
+c_where   = BHCmd("c_where",   lambda _l, _r: (
     gdb.execute("stepi"),
     gdb.execute("where")))
 
