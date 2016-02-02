@@ -1,3 +1,5 @@
+# {{{ Imports ------------------------------------------------------------------
+
 import gdb
 from re import sub
 from itertools import tee
@@ -6,6 +8,7 @@ try:
 except ImportError: # Python 3.x
     izip = zip
 
+# }}} --------------------------------------------------------------------------
 # {{{ Utility functions --------------------------------------------------------
 
 def clean_remaining(remaining):
@@ -20,7 +23,8 @@ def pairwise(iterable):
 def strip(array):
     return filter(None, array)
 
-# {{{ GDB functions ------------------------------------------------------------
+# }}} --------------------------------------------------------------------------
+# {{{ GDB Library --------------------------------------------------------------
 
 def bp_info():
     info = []
@@ -41,12 +45,8 @@ def bp_info():
             else:
                 bp["uncategorized"].append(breakpoint_str)
         else:
-            print("Can't correctly parse the line: %s: skipping.." % (breakpoint_str,))
+            print("Can't parse the line: %s: skipping.." % (breakpoint_str,))
     return info
-
-# }}}
-
-# {{{ GDB Library --------------------------------------------------------------
 
 class BHBp(gdb.Breakpoint):
     def __init__(self, spec, callback, location, remaining):
@@ -79,11 +79,15 @@ class BHCmd(gdb.Command):
         spec = arg[0:-len(remaining)]
         BHBp(spec, self._callback, location, remaining)
 
-# }}}
-
+# }}} --------------------------------------------------------------------------
 # {{{ Custom commands ----------------------------------------------------------
 
 c_examine = BHCmd("c_examine", lambda _, r: gdb.execute("x/%s" % (r,)))
 c_printf  = BHCmd("c_printf",  lambda _, r: gdb.execute("printf %s" % (r,)))
+c_where   = BHCmd("c_where",  lambda _, _: (
+    gdb.execute("stepi"),
+    gdb.execute("where")))
 
 # }}}
+
+# vim: set filetype=python foldmethod=marker :
