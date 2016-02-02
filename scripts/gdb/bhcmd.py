@@ -12,7 +12,7 @@ except ImportError: # Python 3.x
 # {{{ Utility functions --------------------------------------------------------
 
 def clean_remaining(remaining):
-    return sub(r"^[,]?\s*", "", remaining)
+    return remaining and sub(r"^[,]?\s*", "", remaining)
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
@@ -49,25 +49,26 @@ def bp_info():
     return info
 
 class BHBp(gdb.Breakpoint):
-    def __init__(self, spec, callback, location, remaining):
+    def __init__(self, spec, callback, location, remaining, go_on=False):
         super(BHBp, self).__init__(spec, gdb.BP_BREAKPOINT, internal=False)
         self._callback = callback
         self._location = location
         self._remaining = remaining
 
     def stop(self):
-        if self._remaining is not None:
-            gdb.post_event(lambda: self._callback(self._location, clean_remaining(self._remaining)))
-        else:
-            gdb.post_event(lambda: self._callback(self._location, None))
-        return False
+        callback = lambda: self._callback(self._location, clean_remaining(self._remaining))
+        if go_on:
+            callback = lambda: (callback(), gdb.execute("continue"))
+        gdb.post_event(callback)
+        return True
 
 class BHCmd(gdb.Command):
 
-    def __init__(self, name, callback, verbose=False):
+    def __init__(self, name, callback, verbose=False, go_on=False):
         super(BHCmd, self).__init__(name, gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL)
         self._callback = callback
-        self._verbose = verbose
+        self._verbose  = verbose
+        self._go_on    = go_on
 
     def invoke(self, arg, from_tty):
         (remaining, locations) = gdb.decode_line(arg)
@@ -83,7 +84,7 @@ class BHCmd(gdb.Command):
             spec = arg[0:-len(remaining)]
         else:
             spec = arg[:]
-        BHBp(spec, self._callback, location, remaining)
+        BHBp(spec, self._callback, location, remaining, go_on)
 
 # }}} --------------------------------------------------------------------------
 # {{{ Custom commands ----------------------------------------------------------
@@ -93,6 +94,8 @@ c_printf  = BHCmd("c_printf",  lambda _, r: gdb.execute("printf %s" % (r,)))
 c_where   = BHCmd("c_where",   lambda _l, _r: (
     gdb.execute("stepi"),
     gdb.execute("where")))
+
+loop_where = LoopCmd("loop_where", c_where)
 
 # }}}
 
