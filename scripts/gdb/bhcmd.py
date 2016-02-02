@@ -56,7 +56,10 @@ class BHBp(gdb.Breakpoint):
         self._remaining = remaining
 
     def stop(self):
-        self._callback(self._location, clean_remaining(self._remaining))
+        if self._remaining is not None:
+            self._callback(self._location, clean_remaining(self._remaining))
+        else:
+            self._callback(self._location, None)
         return False
 
 class BHCmd(gdb.Command):
