@@ -76,7 +76,10 @@ class BHCmd(gdb.Command):
         location = locations[0]
         if self._verbose:
             print("-> Location %s" % (location,))
-        spec = arg[0:-len(remaining)]
+        if remaining is not None:
+            spec = arg[0:-len(remaining)]
+        else:
+            spec = arg[:]
         BHBp(spec, self._callback, location, remaining)
 
 # }}} --------------------------------------------------------------------------
